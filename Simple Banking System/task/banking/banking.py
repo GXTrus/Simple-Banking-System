@@ -9,9 +9,7 @@ class Bank:
 
     def work(self):
         while True:
-            print('1. Create an account')
-            print('2. Log into account')
-            print('0. Exit')
+            print('1. Create an account\n2. Log into account\n0. Exit')
             user_input = self.enter_choice(('0', '1', '2'))
             if user_input == '1':
                 self.create_account()
@@ -31,7 +29,10 @@ class Bank:
         return a
 
     def create_account(self):
-        card_number = '400000' + str(random.randint(100000000, 999999999)) + str(random.randint(0, 9))
+        random_number = random.randint(0, 999999999)
+        card_number = f'400000{random_number:09d}'
+        last_number = self.luhn_algorithm(card_number)
+        card_number += str(last_number)
         card_pin = str(random.randint(0, 9)) + str(random.randint(0, 9)) + str(random.randint(0, 9)) + str(
             random.randint(0, 9))
         bank_accounts[card_number] = {'pin': card_pin}
@@ -40,14 +41,22 @@ class Bank:
         print(f'Your card PIN:\n{card_pin}\n')
         return
 
+    def luhn_algorithm(self, card_number):
+        card_number_list = list(card_number)
+        for x in range(0, 16, 2):
+            y = int(card_number_list[x]) * 2
+            card_number_list[x] = str(y - 9 if y > 9 else y)
+        sum = 0
+        for x in card_number_list:
+            sum += int(x)
+        return (10 - sum % 10) % 10
+
     def work_with_account(self):
         card_number = self.login_account()
         result = ''
         if card_number:
             while True:
-                print('1. Balance')
-                print('2. Log out')
-                print('0. Exit')
+                print('1. Balance\n2. Log out\n0. Exit')
                 user_input = self.enter_choice(('0', '1', '2'))
                 if user_input == '1':
                     balance = bank_accounts[card_number].get('balance', 0)
