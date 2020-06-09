@@ -123,3 +123,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+*.storageData
+*.storageRecordIndex
+*.iml
+*.xml
+requirements.txt
+Simple Banking System/Advanced system/task-remote-info.yaml
+Simple Banking System/Card anatomy/task-remote-info.yaml
+Simple Banking System/I'm so lite/task-remote-info.yaml
+Simple Banking System/Luhn algorithm/task-remote-info.yaml
