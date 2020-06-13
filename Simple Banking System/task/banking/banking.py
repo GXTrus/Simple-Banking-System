@@ -1,10 +1,31 @@
 import random
 
-bank_accounts = {}
+from sqlalchemy import Column, Integer, String, create_engine, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 
 class Bank:
     def __init__(self):
+        db_card = create_engine('sqlite:///card.s3db?check_same_thread=False')
+        Base = declarative_base()
+
+        class CardTable(Base):
+            __tablename__ = 'card'
+            id = Column(Integer, primary_key=True)
+            number = Column(Text)
+            pin = Column(Text, default='0000')
+            balance = Column(Integer, default=0)
+
+            def __repr__(self):
+                return f"{self.number}, {self.pin}, {self.balance}"
+
+            def __str__(self):
+                return [self.number, self.pin, self.balance]
+
+        Base.metadata.create_all(db_card)
+        self.session = sessionmaker(bind=db_card)()
+        self.CardTable = CardTable
         self.work()
 
     def work(self):
@@ -17,6 +38,7 @@ class Bank:
                 user_input = self.work_with_account()
             if user_input == '0':
                 break
+        self.session.commit()
         print('\nBye!')
 
     def enter_choice(self, variants):
@@ -35,7 +57,11 @@ class Bank:
         card_number += str(last_number)
         card_pin = str(random.randint(0, 9)) + str(random.randint(0, 9)) + str(random.randint(0, 9)) + str(
             random.randint(0, 9))
-        bank_accounts[card_number] = {'pin': card_pin}
+        new_row = self.CardTable(number=card_number, pin=card_pin)
+        self.session.add(new_row)
+        self.session.commit()
+        # rows = self.session.query(self.CardTable).all()
+        # print(rows)
         print('\nYour card has been created')
         print(f'Your card number:\n{card_number}')
         print(f'Your card PIN:\n{card_pin}\n')
@@ -52,14 +78,14 @@ class Bank:
         return (10 - sum % 10) % 10
 
     def work_with_account(self):
-        card_number = self.login_account()
+        card_info = self.login_account()
         result = ''
-        if card_number:
+        if card_info:
             while True:
                 print('1. Balance\n2. Log out\n0. Exit')
                 user_input = self.enter_choice(('0', '1', '2'))
                 if user_input == '1':
-                    balance = bank_accounts[card_number].get('balance', 0)
+                    balance = card_info[0].balance
                     print(f'\nBalance: {balance}\n')
                 elif user_input == '2':
                     print('\nYou have successfully logged out!\n')
@@ -71,15 +97,19 @@ class Bank:
 
     def login_account(self):
         print('\nEnter your card number:')
-        card_number = input()
+        card_number = str(input().strip())
         print('Enter your PIN:')
-        card_pin = input()
-        if bank_accounts.get(card_number) is None or bank_accounts[card_number]['pin'] != card_pin:
+        card_pin = str(input().strip())
+        # rows = self.session.query(self.CardTable).all()
+        # print(rows)
+        rows = self.session.query(self.CardTable).filter(self.CardTable.number == card_number).all()
+        # print(rows)
+        if rows == [] or (rows[0].pin != card_pin):
             print('\nWrong card number or PIN!\n')
             return False
         else:
             print('\nYou have successfully logged in!\n')
-            return card_number
+            return rows
 
 
 if __name__ == '__main__':
